@@ -7,3 +7,15 @@
 body {
   font-family: Arial, sans-serif;
 }
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
