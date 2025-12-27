@@ -27,3 +27,17 @@ body {
 .current-location {
   margin-bottom: 24px;
 }
+
+.status {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.status-loading,
+.status-error {
+  display: none;
+}
+
+.status-error {
+  color: red;
+}

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Прогноз погоды</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
@@ -17,6 +17,14 @@
     <main class="app-content">
         <section class="current-location">
             <h2 class="location-title">Текущее местоположение</h2>
+            <div class="status status-loading">
+                Загрузка данных о погоде...
+            </div>
+
+            <div class="status status-error">
+                Не удалось получить данные о погоде
+            </div>
+
         </section>
     </main>
       
