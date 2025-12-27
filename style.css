@@ -54,3 +54,33 @@ body {
   border: 1px solid #ccc;
   text-align: center;
 }
+
+.add-city {
+  margin-bottom: 24px;
+}
+
+.city-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 4px;
+}
+
+.city-suggestions {
+  list-style: none;
+  border: 1px solid #ccc;
+  margin-bottom: 4px;
+  max-height: 100px;
+  overflow-y: auto;
+  padding-left: 0;
+}
+
+.input-error {
+  color: red;
+  font-size: 14px;
+  display: none;
+}
+
+.add-city-btn {
+  padding: 8px 12px;
+  cursor: pointer;
+}
