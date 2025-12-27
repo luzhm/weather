@@ -93,3 +93,26 @@ body {
   list-style: none;
   padding-left: 0;
 }
+
+body {
+  padding: 0 10px;
+}
+
+@media (min-width: 600px) {
+  .app {
+    padding: 24px;
+  }
+
+  .forecast {
+    gap: 24px;
+  }
+
+  .city-input {
+    max-width: 400px;
+  }
+
+  .add-city-btn {
+    max-width: 150px;
+  }
+}
+
