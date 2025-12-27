@@ -41,3 +41,16 @@ body {
 .status-error {
   color: red;
 }
+
+.forecast {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.forecast-day {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
