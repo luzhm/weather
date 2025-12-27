@@ -84,3 +84,12 @@ body {
   padding: 8px 12px;
   cursor: pointer;
 }
+
+.cities-list {
+  margin-bottom: 24px;
+}
+
+.cities {
+  list-style: none;
+  padding-left: 0;
+}
