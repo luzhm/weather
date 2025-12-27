@@ -19,3 +19,11 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+
+.app-content {
+  margin-top: 24px;
+}
+
+.current-location {
+  margin-bottom: 24px;
+}
