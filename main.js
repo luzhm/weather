@@ -124,6 +124,16 @@ addCityBtn.addEventListener('click', () => {
     return;
   }
 
+  const existingCities = Array.from(citiesList.children).map(
+    li => li.textContent.toLowerCase()
+  );
+
+  if (existingCities.includes(cityName.toLowerCase())) {
+    inputError.style.display = 'block';
+    inputError.textContent = 'Этот город уже добавлен';
+    return;
+  }
+
   inputError.style.display = 'none';
 
   const li = document.createElement('li');
@@ -132,4 +142,3 @@ addCityBtn.addEventListener('click', () => {
 
   cityInput.value = '';
 });
-
