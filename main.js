@@ -18,14 +18,93 @@ const citiesList = document.querySelector('.cities');
 const citySuggestions = document.querySelector('.city-suggestions');
 
 let cityList = [];
-let selectedCity = null;
+
+const STORAGE_KEYS = {
+  CURRENT_LOCATION: 'weatherApp.currentLocation',
+  CITIES: 'weatherApp.cities'
+};
 
 async function loadCityList() {
   try {
-    const response = await fetch('russian-cities.json');
-    cityList = await response.json();
+    const res = await fetch('russian-cities.json');
+    if (!res.ok) throw new Error('Не удалось загрузить список городов');
+    cityList = await res.json();
   } catch (error) {
-    console.error('Ошибка загрузки списка городов:', error);
+    console.error(error);
+    cityList = [];
+  }
+}
+
+function updateCitySuggestions() {
+  const val = cityInput.value.trim().toLowerCase();
+  citySuggestions.innerHTML = '';
+
+  if (val.length < 2) return;
+
+  const filtered = cityList
+    .filter(city => city.name.toLowerCase().startsWith(val))
+    .slice(0, 5);
+
+  filtered.forEach(city => {
+    const li = document.createElement('li');
+    li.textContent = city.name;
+    li.dataset.lat = city.coords.lat;
+    li.dataset.lon = city.coords.lon;
+    citySuggestions.appendChild(li);
+  });
+}
+
+citySuggestions.addEventListener('click', (e) => {
+  if (e.target.tagName.toLowerCase() === 'li') {
+    cityInput.value = e.target.textContent;
+    cityInput.dataset.lat = e.target.dataset.lat;
+    cityInput.dataset.lon = e.target.dataset.lon;
+    citySuggestions.innerHTML = '';
+    inputError.style.display = 'none';
+  }
+});
+
+cityInput.addEventListener('input', () => {
+  cityInput.dataset.lat = '';
+  cityInput.dataset.lon = '';
+  updateCitySuggestions();
+  inputError.style.display = 'none';
+});
+
+function saveCitiesToStorage() {
+  const cities = Array.from(citiesList.children).map(li => ({
+    name: li.querySelector('.city-name').textContent,
+    lat: li.dataset.lat,
+    lon: li.dataset.lon
+  }));
+  localStorage.setItem(STORAGE_KEYS.CITIES, JSON.stringify(cities));
+}
+
+function loadCitiesFromStorage() {
+  const data = localStorage.getItem(STORAGE_KEYS.CITIES);
+  if (!data) return [];
+  try {
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+function saveCurrentLocation(coords) {
+  if (coords) {
+    localStorage.setItem(STORAGE_KEYS.CURRENT_LOCATION, JSON.stringify(coords));
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_LOCATION);
+  }
+}
+
+function loadCurrentLocation() {
+  const data = localStorage.getItem(STORAGE_KEYS.CURRENT_LOCATION);
+  if (!data) return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
   }
 }
 
@@ -47,7 +126,7 @@ function hideError() {
   errorStatus.style.display = 'none';
 }
 
-function displayForecast(data) {
+function displayForecast(data, isCurrentLocation = false, cityName = null) {
   const daysMap = {};
 
   data.list.forEach(item => {
@@ -75,10 +154,10 @@ function displayForecast(data) {
     }
   });
 
-  locationTitle.textContent = data.city.name;
+  locationTitle.textContent = cityName ? cityName : (isCurrentLocation ? 'Текущее местоположение' : data.city.name);
 }
 
-async function fetchWeather(lat, lon) {
+async function fetchWeather(lat, lon, isCurrentLocation = false, cityName = null) {
   const url = `${BASE_URL}?lat=${lat}&lon=${lon}&units=metric&lang=ru&appid=${API_KEY}`;
 
   try {
@@ -91,7 +170,7 @@ async function fetchWeather(lat, lon) {
     const data = await res.json();
 
     hideLoading();
-    displayForecast(data);
+    displayForecast(data, isCurrentLocation, cityName);
   } catch (error) {
     hideLoading();
     showError('Не удалось получить данные о погоде');
@@ -103,72 +182,78 @@ function requestGeolocation() {
   if ('geolocation' in navigator) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        addCitySection.classList.add('hidden');
         const { latitude, longitude } = position.coords;
-        fetchWeather(latitude, longitude);
+        saveCurrentLocation({ lat: latitude, lon: longitude });
+        fetchWeather(latitude, longitude, true);
+        addCitySection.classList.remove('hidden');
       },
       (error) => {
-        console.log('Доступ к геолокации отклонён или произошла ошибка:', error.message);
+        saveCurrentLocation(null);
         addCitySection.classList.remove('hidden');
       }
     );
   } else {
-    console.log('Геолокация не поддерживается браузером');
+    saveCurrentLocation(null);
     addCitySection.classList.remove('hidden');
   }
 }
 
-cityInput.addEventListener('input', () => {
-  const query = cityInput.value.trim().toLowerCase();
-  citySuggestions.innerHTML = '';
-  selectedCity = null;
-
-  if (query.length < 2) {
-    citySuggestions.style.display = 'none';
-    return;
-  }
-
-  const matchedCities = cityList.filter(city =>
-    city.name.toLowerCase().startsWith(query)
-  );
-
-  if (matchedCities.length === 0) {
-    citySuggestions.style.display = 'none';
-    return;
-  }
-
-  matchedCities.forEach(city => {
+function restoreCities() {
+  const savedCities = loadCitiesFromStorage();
+  savedCities.forEach(city => {
     const li = document.createElement('li');
-    li.textContent = city.name;
-    citySuggestions.appendChild(li);
+    li.dataset.lat = city.lat;
+    li.dataset.lon = city.lon;
+
+    const citySpan = document.createElement('span');
+    citySpan.textContent = city.name;
+    citySpan.classList.add('city-name');
+    li.appendChild(citySpan);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×';
+    removeBtn.classList.add('remove-btn');
+    removeBtn.title = 'Удалить город';
+    li.appendChild(removeBtn);
+
+    citiesList.appendChild(li);
   });
+}
 
-  citySuggestions.style.display = 'block';
-});
+window.addEventListener('load', async () => {
+  await loadCityList();
 
-citySuggestions.addEventListener('click', (e) => {
-  if (e.target.tagName.toLowerCase() === 'li') {
-    const cityName = e.target.textContent;
-    cityInput.value = cityName;
-    citySuggestions.innerHTML = '';
-    citySuggestions.style.display = 'none';
+  restoreCities();
 
-    selectedCity = cityList.find(city => city.name === cityName);
-    inputError.style.display = 'none';
+  const savedCurrentLocation = loadCurrentLocation();
+
+  if (savedCurrentLocation) {
+    fetchWeather(savedCurrentLocation.lat, savedCurrentLocation.lon, true);
+    addCitySection.classList.remove('hidden');
+  } else {
+    requestGeolocation();
   }
 });
 
 addCityBtn.addEventListener('click', () => {
-  if (!selectedCity) {
+  const cityName = cityInput.value.trim();
+
+  if (cityName === '') {
     inputError.style.display = 'block';
-    inputError.textContent = 'Пожалуйста, выберите город из списка';
+    inputError.textContent = 'Введите название города';
     return;
   }
 
-  const cityName = selectedCity.name;
+  const matchedCity = cityList.find(city => city.name.toLowerCase() === cityName.toLowerCase());
+
+  if (!matchedCity) {
+    inputError.style.display = 'block';
+    inputError.textContent = 'Такой город не найден';
+    return;
+  }
 
   const existingCities = Array.from(citiesList.children).map(
-    li => li.textContent.toLowerCase()
+    li => li.querySelector('.city-name').textContent.toLowerCase()
   );
 
   if (existingCities.includes(cityName.toLowerCase())) {
@@ -177,43 +262,65 @@ addCityBtn.addEventListener('click', () => {
     return;
   }
 
-  if (citiesList.children.length >= 3) {
-    inputError.style.display = 'block';
-    inputError.textContent = 'Можно добавить не более 3 городов';
-    return;
-  }
-
   inputError.style.display = 'none';
 
   const li = document.createElement('li');
-  li.textContent = cityName;
-  li.dataset.lat = selectedCity.coords.lat;
-  li.dataset.lon = selectedCity.coords.lon;
+  li.dataset.lat = matchedCity.coords.lat;
+  li.dataset.lon = matchedCity.coords.lon;
+
+  const citySpan = document.createElement('span');
+  citySpan.textContent = matchedCity.name;
+  citySpan.classList.add('city-name');
+  li.appendChild(citySpan);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.textContent = '×';
+  removeBtn.classList.add('remove-btn');
+  removeBtn.title = 'Удалить город';
+  li.appendChild(removeBtn);
+
   citiesList.appendChild(li);
 
+  saveCitiesToStorage();
+
   cityInput.value = '';
-  selectedCity = null;
+  citySuggestions.innerHTML = '';
 });
 
 citiesList.addEventListener('click', (e) => {
-  if (e.target.tagName.toLowerCase() === 'li') {
-    const lat = e.target.dataset.lat;
-    const lon = e.target.dataset.lon;
+  if (e.target.classList.contains('remove-btn')) {
+    const li = e.target.parentElement;
+    li.remove();
+    saveCitiesToStorage();
+    return;
+  }
+
+  if (e.target.tagName.toLowerCase() === 'li' || e.target.classList.contains('city-name')) {
+    const li = e.target.tagName.toLowerCase() === 'li' ? e.target : e.target.parentElement;
+    const lat = li.dataset.lat;
+    const lon = li.dataset.lon;
+    const cityName = li.querySelector('.city-name').textContent;
 
     if (lat && lon) {
-      fetchWeather(lat, lon);
-      addCitySection.classList.add('hidden');
+      fetchWeather(lat, lon, false, cityName);
+      addCitySection.classList.remove('hidden');
+      saveCurrentLocation(null);
     }
   }
 });
 
-if (refreshBtn) {
-  refreshBtn.addEventListener('click', () => {
-    requestGeolocation();
-  });
-}
+refreshBtn.addEventListener('click', () => {
+  const savedCurrentLocation = loadCurrentLocation();
 
-window.addEventListener('load', async () => {
-  await loadCityList();
-  requestGeolocation();
+  if (savedCurrentLocation) {
+    fetchWeather(savedCurrentLocation.lat, savedCurrentLocation.lon, true);
+  }
+
+  Array.from(citiesList.children).forEach(li => {
+    const lat = li.dataset.lat;
+    const lon = li.dataset.lon;
+    if (lat && lon) {
+      fetchWeather(lat, lon, false);
+    }
+  });
 });
