@@ -109,3 +109,22 @@ if (refreshBtn) {
     requestGeolocation();
   });
 }
+
+const cityInput = document.querySelector('.city-input');
+const addCityBtn = document.querySelector('.add-city-btn');
+const inputError = document.querySelector('.input-error');
+
+addCityBtn.addEventListener('click', () => {
+  const cityName = cityInput.value.trim();
+
+  if (cityName === '') {
+    inputError.style.display = 'block';
+    inputError.textContent = 'Введите название города';
+    return;
+  }
+
+  inputError.style.display = 'none';
+  console.log('Город введён:', cityName);
+
+  cityInput.value = '';
+});
