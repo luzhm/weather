@@ -11,6 +11,24 @@ const errorStatus = currentLocationSection.querySelector('.status-error');
 const locationTitle = currentLocationSection.querySelector('.location-title');
 const refreshBtn = document.querySelector('.refresh-btn');
 
+const cityInput = document.querySelector('.city-input');
+const addCityBtn = document.querySelector('.add-city-btn');
+const inputError = document.querySelector('.input-error');
+const citiesList = document.querySelector('.cities');
+const citySuggestions = document.querySelector('.city-suggestions');
+
+let cityList = [];
+let selectedCity = null;
+
+async function loadCityList() {
+  try {
+    const response = await fetch('russian-cities.json');
+    cityList = await response.json();
+  } catch (error) {
+    console.error('Ошибка загрузки списка городов:', error);
+  }
+}
+
 function showLoading() {
   loadingStatus.style.display = 'block';
   errorStatus.style.display = 'none';
@@ -100,29 +118,54 @@ function requestGeolocation() {
   }
 }
 
-window.addEventListener('load', () => {
-  requestGeolocation();
-});
+cityInput.addEventListener('input', () => {
+  const query = cityInput.value.trim().toLowerCase();
+  citySuggestions.innerHTML = '';
+  selectedCity = null;
 
-if (refreshBtn) {
-  refreshBtn.addEventListener('click', () => {
-    requestGeolocation();
-  });
-}
-
-const cityInput = document.querySelector('.city-input');
-const addCityBtn = document.querySelector('.add-city-btn');
-const inputError = document.querySelector('.input-error');
-const citiesList = document.querySelector('.cities');
-
-addCityBtn.addEventListener('click', () => {
-  const cityName = cityInput.value.trim();
-
-  if (cityName === '') {
-    inputError.style.display = 'block';
-    inputError.textContent = 'Введите название города';
+  if (query.length < 2) {
+    citySuggestions.style.display = 'none';
     return;
   }
+
+  const matchedCities = cityList.filter(city =>
+    city.name.toLowerCase().startsWith(query)
+  );
+
+  if (matchedCities.length === 0) {
+    citySuggestions.style.display = 'none';
+    return;
+  }
+
+  matchedCities.forEach(city => {
+    const li = document.createElement('li');
+    li.textContent = city.name;
+    citySuggestions.appendChild(li);
+  });
+
+  citySuggestions.style.display = 'block';
+});
+
+citySuggestions.addEventListener('click', (e) => {
+  if (e.target.tagName.toLowerCase() === 'li') {
+    const cityName = e.target.textContent;
+    cityInput.value = cityName;
+    citySuggestions.innerHTML = '';
+    citySuggestions.style.display = 'none';
+
+    selectedCity = cityList.find(city => city.name === cityName);
+    inputError.style.display = 'none';
+  }
+});
+
+addCityBtn.addEventListener('click', () => {
+  if (!selectedCity) {
+    inputError.style.display = 'block';
+    inputError.textContent = 'Пожалуйста, выберите город из списка';
+    return;
+  }
+
+  const cityName = selectedCity.name;
 
   const existingCities = Array.from(citiesList.children).map(
     li => li.textContent.toLowerCase()
@@ -134,11 +177,43 @@ addCityBtn.addEventListener('click', () => {
     return;
   }
 
+  if (citiesList.children.length >= 3) {
+    inputError.style.display = 'block';
+    inputError.textContent = 'Можно добавить не более 3 городов';
+    return;
+  }
+
   inputError.style.display = 'none';
 
   const li = document.createElement('li');
   li.textContent = cityName;
+  li.dataset.lat = selectedCity.coords.lat;
+  li.dataset.lon = selectedCity.coords.lon;
   citiesList.appendChild(li);
 
   cityInput.value = '';
+  selectedCity = null;
+});
+
+citiesList.addEventListener('click', (e) => {
+  if (e.target.tagName.toLowerCase() === 'li') {
+    const lat = e.target.dataset.lat;
+    const lon = e.target.dataset.lon;
+
+    if (lat && lon) {
+      fetchWeather(lat, lon);
+      addCitySection.classList.add('hidden');
+    }
+  }
+});
+
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', () => {
+    requestGeolocation();
+  });
+}
+
+window.addEventListener('load', async () => {
+  await loadCityList();
+  requestGeolocation();
 });

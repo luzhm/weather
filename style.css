@@ -67,12 +67,28 @@ body {
 
 .city-suggestions {
   list-style: none;
+  padding: 0;
+  margin: 0;
   border: 1px solid #ccc;
-  margin-bottom: 4px;
-  max-height: 100px;
+  max-height: 150px;
   overflow-y: auto;
-  padding-left: 0;
+  position: absolute;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 1000;
+  display: none;
 }
+
+.city-suggestions li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.city-suggestions li:hover {
+  background-color: #eee;
+}
+
 
 .input-error {
   color: red;
@@ -129,5 +145,9 @@ body {
   overflow: hidden; 
   clip: rect(0, 0, 0, 0); 
   border: 0;
+}
+
+.add-city {
+  position: relative;
 }
 
