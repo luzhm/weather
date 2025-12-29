@@ -113,6 +113,7 @@ if (refreshBtn) {
 const cityInput = document.querySelector('.city-input');
 const addCityBtn = document.querySelector('.add-city-btn');
 const inputError = document.querySelector('.input-error');
+const citiesList = document.querySelector('.cities');
 
 addCityBtn.addEventListener('click', () => {
   const cityName = cityInput.value.trim();
@@ -124,7 +125,11 @@ addCityBtn.addEventListener('click', () => {
   }
 
   inputError.style.display = 'none';
-  console.log('Город введён:', cityName);
+
+  const li = document.createElement('li');
+  li.textContent = cityName;
+  citiesList.appendChild(li);
 
   cityInput.value = '';
 });
+
