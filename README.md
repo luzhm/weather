@@ -4,4 +4,4 @@
 
 https://luzhm.github.io/weather/
 
-ссылка на идеодемонстрацию рабочего приложения: https://disk.yandex.ru/d/AMLHjK1rt-FcYQ
+ссылка на видеодемонстрацию рабочего приложения: https://disk.yandex.ru/d/AMLHjK1rt-FcYQ
