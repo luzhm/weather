@@ -313,14 +313,13 @@ refreshBtn.addEventListener('click', () => {
   const savedCurrentLocation = loadCurrentLocation();
 
   if (savedCurrentLocation) {
-    fetchWeather(savedCurrentLocation.lat, savedCurrentLocation.lon, true);
+    fetchWeather(savedCurrentLocation.lat, savedCurrentLocation.lon);
   }
-
   Array.from(citiesList.children).forEach(li => {
     const lat = li.dataset.lat;
     const lon = li.dataset.lon;
     if (lat && lon) {
-      fetchWeather(lat, lon, false);
+      fetchWeather(lat, lon);
     }
   });
 });
