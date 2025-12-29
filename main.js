@@ -37,7 +37,10 @@ async function loadCityList() {
 
 function updateCitySuggestions() {
   const val = cityInput.value.trim().toLowerCase();
-  citySuggestions.innerHTML = '';
+  while (citySuggestions.firstChild) {
+  citySuggestions.removeChild(citySuggestions.firstChild);
+  }
+
 
   if (val.length < 2) return;
 
@@ -59,7 +62,10 @@ citySuggestions.addEventListener('click', (e) => {
     cityInput.value = e.target.textContent;
     cityInput.dataset.lat = e.target.dataset.lat;
     cityInput.dataset.lon = e.target.dataset.lon;
-    citySuggestions.innerHTML = '';
+    while (citySuggestions.firstChild) {
+  citySuggestions.removeChild(citySuggestions.firstChild);
+    }
+
     inputError.style.display = 'none';
   }
 });
@@ -283,8 +289,8 @@ addCityBtn.addEventListener('click', () => {
 
   saveCitiesToStorage();
 
-  cityInput.value = '';
-  citySuggestions.innerHTML = '';
+    cityInput.value = '';
+    citySuggestions.replaceChildren();
 });
 
 citiesList.addEventListener('click', (e) => {
